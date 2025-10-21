@@ -1,0 +1,8 @@
+numpy
+pandas
+matplotlib
+seaborn
+yfinance
+hmmlearn
+torch
+scikit-learn
