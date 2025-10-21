@@ -61,14 +61,65 @@ New Regime → Fine-tuning → Adapted Portfolio Policy
 
 ```
 
-maml-dynamic-portfolio-allocation/
+project_root/
 │
-├── data/                    # Datasets and market regime partitions
-├── models/                  # Model architectures (MAML, Baselines)
-├── scripts/                 # Training, fine-tuning, evaluation scripts
-├── experiments/             # Configurations and results
-├── utils/                   # Helper functions (metrics, preprocessing)
-└── README.md
+├── data/
+│   ├── raw/
+│   │   ├── sp500_raw.csv
+│   │   └── vix_raw.csv
+│   ├── cleaned/
+│   ├── features/
+│   ├── processed/
+│   │   └── regime_segments.pkl
+│   └── tasks/
+│
+├── notebooks/
+│   ├── 01_data_exploration.ipynb
+│   ├── 02_feature_analysis.ipynb
+│   ├── 03_regime_visualization.ipynb
+│   └── 04_task_validation.ipynb
+│
+├── src/
+│   ├── data/
+│   │   ├── __init__.py
+│   │   ├── data_acquisition.py
+│   │   ├── data_cleaning.py
+│   │   ├── feature_engineering.py
+│   │   └── task_dataset.py
+│   │
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── hmm_regime.py
+│   │   └── portfolio_net.py
+│   │
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── plotting.py
+│   │   ├── experiment_logger.py
+│   │   └── validations.py
+│   │
+│   └── __init__.py
+│
+├── tests/
+│   ├── test_data_pipeline.py
+│   ├── test_features.py
+│   ├── test_task_dataset.py
+│   └── test_models.py
+│
+├── configs/
+│   ├── experiment_template.yaml
+│   └── hyperparams_tracker.xlsx
+│
+├── docs/
+│   ├── 01_data_pipeline.md
+│   ├── 02_feature_engineering.md
+│   ├── 03_hmm_regime_detection.md
+│   └── 04_meta_learning_tasks.md
+│
+├── requirements.txt
+├── README.md
+└── setup_kanban_structure.bat
+
 
 ````
 
