@@ -35,3 +35,5 @@ data/raw/
 .ipynb_checkpoints/
 # VS Code
 .vscode/
+# Allow tracking this specific processed CSV used for modeling (explicit exception)
+!data/processed/features_imputed.csv
