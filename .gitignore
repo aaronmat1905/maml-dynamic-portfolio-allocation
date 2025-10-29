@@ -19,4 +19,19 @@ __pycache__/
 *.parquet
 
 .DS_Store
-Thumbs.db
+Thumbs.db# Python
+__pycache__/
+*.pyc
+# venv
+.venv/
+venv/
+# env
+.env
+# Data artifacts (do not track pickles)
+data/processed/*.pkl
+# Optionally avoid raw data in repo
+data/raw/
+# Notebook checkpoints
+.ipynb_checkpoints/
+# VS Code
+.vscode/
