@@ -1,0 +1,46 @@
+{
+  "method": "zscore",
+  "params": {
+    "mean": {
+      "sp_log_return": 0.00032490754609800464,
+      "vix_log_return": 3.852096068164244e-07,
+      "sp_return_ma5": 0.0003257958662739365,
+      "sp_return_ma20": 0.0003306584848603694,
+      "sp_vol_20": 0.009720618572951985,
+      "sp_momentum_10": 0.003271097918219005,
+      "sp_rsi_14": 55.07100608754517,
+      "sp_atr_14": 22.932737714242315,
+      "sp_volume_pct_change_1": 0.021042260537851586,
+      "sp_high_low_range": 0.01242141046283189
+    },
+    "std": {
+      "sp_log_return": 0.011401725853191252,
+      "vix_log_return": 0.06803513361121412,
+      "sp_return_ma5": 0.004713182367908253,
+      "sp_return_ma20": 0.0022297894002776524,
+      "sp_vol_20": 0.006097404071339427,
+      "sp_momentum_10": 0.03186971459521242,
+      "sp_rsi_14": 15.986953383430507,
+      "sp_atr_14": 22.70409177956161,
+      "sp_volume_pct_change_1": 0.3476503237784651,
+      "sp_high_low_range": 0.009150777519399833
+    }
+  },
+  "created_at": "2025-10-29T03:25:48.902597Z",
+  "python_version": "3.11.5",
+  "pandas_version": "2.3.3",
+  "numpy_version": "2.3.4",
+  "features": [
+    "sp_log_return",
+    "vix_log_return",
+    "sp_return_ma5",
+    "sp_return_ma20",
+    "sp_vol_20",
+    "sp_momentum_10",
+    "sp_rsi_14",
+    "sp_atr_14",
+    "sp_volume_pct_change_1",
+    "sp_high_low_range"
+  ],
+  "notes": "Do NOT load the pickle from untrusted sources. Use this JSON for portability."
+}
