@@ -6,9 +6,18 @@ implementation, how missing values are handled, and where the generated
 artifacts are saved in the repository.
 
 Files produced by the pipeline (canonical paths)
-- `data/processed/features_unnormalized.csv` — raw, un-normalized feature matrix
-- `data/processed/features_with_scaler.csv` — normalized feature matrix (canonical)
-- `data/processed/feature_scaler.pkl` — saved normalization parameters (dict)
+- `data/processed/features_unnormalized.csv` — raw, un-normalized feature matrix (diagnostic)
+- `data/processed/features_with_scaler.csv` — normalized feature matrix (canonical, 10 features)
+- `data/processed/features_imputed.csv` — **modeling-ready CSV** (11 features, median-imputed, no NaNs)
+- `data/processed/feature_scaler.json` — **portable normalization parameters** (recommended for sharing)
+- `data/processed/imputer_medians.json` — median values used for imputation
+
+**Note:** A local pickle `feature_scaler.pkl` may exist for convenience but is intentionally untracked. Prefer JSON for portability and security.
+
+Which file should I use?
+- **For modeling / HMM training:** Use `features_imputed.csv` (no NaNs, includes imputation masks)
+- **To reproduce normalization:** Use `features_with_scaler.csv` + `feature_scaler.json`
+- **For diagnostics / raw values:** Use `features_unnormalized.csv`
 
 Overview
 --------
@@ -92,25 +101,47 @@ Normalization / reproducibility
 --------------------------------
 The pipeline supports two normalization methods in `normalize_features()`:
 
-- zscore (default): (x - mean) / std — the pipeline computes column-wise
-	mean and std and saves them to `data/processed/feature_scaler.pkl` as a
-	serialized dict of the form:
+- **zscore (default):** (x - mean) / std — the pipeline computes column-wise
+	mean and std and saves them to `data/processed/feature_scaler.json` as a
+	portable JSON dict of the form:
 
+	```json
 	{
 		"method": "zscore",
 		"params": {
-			"mean": {"sp_log_return": ..., ...},
-			"std": {"sp_log_return": ..., ...}
-		}
+			"mean": {"sp_log_return": 0.000325, ...},
+			"std": {"sp_log_return": 0.011402, ...}
+		},
+		"created_at": "2025-10-29T...",
+		"versions": {"python": "3.11.5", "pandas": "2.3.3", "numpy": "2.3.4"},
+		"features": ["sp_log_return", "vix_log_return", ...]
 	}
+	```
 
-- minmax: scales to [0, 1] and the saved params are `min` and `max`.
+- **minmax:** scales to [0, 1] and the saved params are `min` and `max`.
 
-Use the saved scaler to reproduce normalization exactly across environments by
-loading the dict with `src.data.feature_engineering.load_feature_scaler()` and
-applying the inverse/forward transform logic (the module exposes
-`normalize_features()` which returns both normalized DataFrame and a scaler
-dict when called programmatically).
+**To reproduce normalization across environments:**
+Load the JSON scaler and apply the transform manually or use the helper:
+
+```python
+import json
+import pandas as pd
+
+# Load JSON scaler (portable, safe)
+with open('data/processed/feature_scaler.json', 'r') as f:
+    scaler = json.load(f)
+
+# Apply normalization manually
+features_df = pd.read_csv('data/processed/features_unnormalized.csv', index_col=0, parse_dates=True)
+if scaler['method'] == 'zscore':
+    normalized = (features_df - pd.Series(scaler['params']['mean'])) / pd.Series(scaler['params']['std'])
+
+# Or use the helper (loads JSON by default)
+from src.data.feature_engineering import load_feature_scaler
+scaler = load_feature_scaler()  # Prefers .json over .pkl
+```
+
+**Security warning:** Never load `feature_scaler.pkl` from untrusted sources — pickles can execute arbitrary code. The JSON scaler is safe and portable.
 
 Quick usage examples
 --------------------
@@ -118,12 +149,20 @@ In Python, from the project root:
 
 ```python
 from src.data import feature_engineering as fe
+import pandas as pd
+import json
 
-# Load canonical normalized features (raises if missing)
-df = fe.load_normalized_features()
+# Load modeling-ready features (imputed, no NaNs)
+df_imputed = pd.read_csv('data/processed/features_imputed.csv', index_col=0, parse_dates=True)
 
-# Load saved scaler
-scaler = fe.load_feature_scaler()
+# Load canonical normalized features (10 features, may have NaNs in early rows)
+df_normalized = pd.read_csv('data/processed/features_with_scaler.csv', index_col=0, parse_dates=True)
+
+# Load scaler from JSON (portable, recommended)
+with open('data/processed/feature_scaler.json', 'r') as f:
+    scaler = json.load(f)
+print(f"Normalization method: {scaler['method']}")
+print(f"Mean of sp_log_return: {scaler['params']['mean']['sp_log_return']:.6f}")
 
 # Recompute features from raw merged data and re-normalize (if needed)
 features = fe.compute_features(fe.load_merged())
@@ -131,6 +170,9 @@ normed, scaler_dict = fe.normalize_features(features, method="zscore")
 
 # Create plots saved to docs/figures
 fe.plot_features(normed, cols=normed.columns[:6], out_dir="docs/figures")
+
+# Apply imputation (creates features_imputed.csv)
+fe.prepare_features_for_modeling(impute=True, add_volume_log=True)
 ```
 
 Notes and provenance
@@ -141,24 +183,23 @@ Notes and provenance
 	experiment by changing the window parameters in `compute_features()`.
 - The canonical normalized CSV in the repository is
 	`data/processed/features_with_scaler.csv`. The scaler required to reproduce
-	normalization is `data/processed/feature_scaler.pkl`.
+	normalization is `data/processed/feature_scaler.json`.
+- For modeling, use `data/processed/features_imputed.csv` which includes:
+	- All 10 original features plus `sp_volume_log_return` (11 total)
+	- Median imputation for NaN values
+	- Boolean `imputed_<col>` flags to track which values were imputed
+	- Zero numeric NaNs (safe for HMM and neural network training)
 
-Security & portability warning about the pickle
-------------------------------------------------
-The scaler is saved as a Python pickle (`feature_scaler.pkl`) for convenience,
-but pickles are not secure when loaded from untrusted sources and can be
-version-sensitive (different Python / pandas releases may behave differently
-when unpickling). To mitigate this:
+Security & portability best practices
+--------------------------------------
+**Prefer JSON over pickle:**
+- `feature_scaler.json` is a portable, human-readable format that works across Python versions and is safe to load from any source.
+- `feature_scaler.pkl` exists locally for convenience but is **not tracked in git** and should never be loaded from untrusted sources (pickles can execute arbitrary code).
 
-- A JSON copy of the scaler metadata is also saved at
-	`data/processed/feature_scaler.json`. Prefer using the JSON file to inspect
-	the saved parameters, and to re-implement normalization in other
-	environments.
-- Never load `feature_scaler.pkl` from an untrusted or external repository —
-	pickles can execute arbitrary code on load. Only load the pickle if you
-	trust the repository and the environment.
-- Include Python and pandas version information when archiving data for
-	long-term reproducibility.
+**Reproducibility:**
+- The JSON scaler includes metadata: creation timestamp, Python/pandas/numpy versions, and the list of features.
+- To share your work: commit the JSON files (`feature_scaler.json`, `imputer_medians.json`) and the CSV files.
+- Never commit `.pkl` files to a shared repository.
 
 
 
