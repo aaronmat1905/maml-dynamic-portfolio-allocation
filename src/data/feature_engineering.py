@@ -87,6 +87,29 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
     else:
         out["vix_log_return"] = np.log(df["VIX_Adj Close"]).diff()
 
+    # VIX Regime Features (forced selling detection)
+    # Based on institutional insights: VIX > 40 = forced selling, predictable recovery
+    if "VIX_Close" in df.columns:
+        vix_close = df["VIX_Close"]
+    elif "VIX_Adj Close" in df.columns:
+        vix_close = df["VIX_Adj Close"]
+    else:
+        vix_close = None
+    
+    if vix_close is not None:
+        out["vix_above_40"] = (vix_close > 40).astype(int)  # Panic/forced selling regime
+        out["vix_above_30"] = (vix_close > 30).astype(int)  # Stressed regime
+        out["vix_above_20"] = (vix_close > 20).astype(int)  # Elevated regime
+        out["vix_spike"] = (vix_close.pct_change() > 0.10).astype(int)  # 10%+ daily spike
+        out["vix_level"] = vix_close  # Raw VIX level for reference
+    else:
+        # Fallback if VIX_Close not found
+        out["vix_above_40"] = 0
+        out["vix_above_30"] = 0
+        out["vix_above_20"] = 0
+        out["vix_spike"] = 0
+        out["vix_level"] = np.nan
+
     # Rolling means
     out["sp_return_ma5"] = out["sp_log_return"].rolling(window=5).mean()
     out["sp_return_ma20"] = out["sp_log_return"].rolling(window=20).mean()
