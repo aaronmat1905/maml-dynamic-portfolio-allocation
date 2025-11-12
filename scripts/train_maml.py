@@ -176,24 +176,24 @@ class MAMLTrainer:
         all_losses = []
         regime_losses = {0: [], 1: [], 2: []}
         
-        with torch.no_grad():
-            for task in test_tasks:
-                support_x = task['support_x'].to(self.device)
-                support_y = task['support_y'].to(self.device)
-                query_x = task['query_x'].to(self.device)
-                query_y = task['query_y'].to(self.device)
-                regime = task['regime_label']
-                
-                # Adapt on support set (inner loop)
-                adapted_model = self.inner_loop(support_x, support_y)
-                
-                # Evaluate on query set
-                adapted_model.eval()
+        for task in test_tasks:
+            support_x = task['support_x'].to(self.device)
+            support_y = task['support_y'].to(self.device)
+            query_x = task['query_x'].to(self.device)
+            query_y = task['query_y'].to(self.device)
+            regime = task['regime_label']
+            
+            # Adapt on support set (inner loop) - needs gradients
+            adapted_model = self.inner_loop(support_x, support_y)
+            
+            # Evaluate on query set (no gradients needed)
+            adapted_model.eval()
+            with torch.no_grad():
                 query_preds = adapted_model(query_x)
                 task_loss = self.criterion(query_preds, query_y).item()
-                
-                all_losses.append(task_loss)
-                regime_losses[regime].append(task_loss)
+            
+            all_losses.append(task_loss)
+            regime_losses[regime].append(task_loss)
         
         avg_loss = np.mean(all_losses)
         
