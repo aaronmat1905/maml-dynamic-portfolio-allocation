@@ -70,6 +70,10 @@ class PortfolioNet(nn.Module):
         x = self.dropout(x)       # Dropout for regularization
         x = self.fc2(x)           # (batch_size, 1)
         
+        # Clip predictions to reasonable return range [-0.15, 0.15]
+        # Prevents explosion during MAML inner loop
+        x = torch.clamp(x, -0.15, 0.15)
+        
         return x
     
     def predict_return(self, x):

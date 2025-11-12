@@ -90,6 +90,10 @@ class MAMLTrainer:
             
             # Backward pass
             loss.backward()
+            
+            # Clip gradients to prevent explosion (critical for crisis data)
+            torch.nn.utils.clip_grad_norm_(temp_model.parameters(), max_norm=1.0)
+            
             inner_optimizer.step()
         
         return temp_model
@@ -318,12 +322,17 @@ def main(args):
         train_loss = trainer.train_epoch(train_tasks, args.meta_batch_size)
         train_losses.append(train_loss)
         
-        # Validate
-        val_loss = trainer.evaluate(val_tasks)
-        val_losses.append(val_loss)
-        
-        # Print progress
-        print(f"Epoch {epoch}/{args.epochs} | Train Loss: {train_loss:.6f} | Val Loss: {val_loss:.6f}")
+        # Validate (with per-regime breakdown every 10 epochs)
+        if epoch % 10 == 0:
+            val_loss, val_regime_losses = trainer.evaluate(val_tasks, return_per_regime=True)
+            val_losses.append(val_loss)
+            
+            print(f"Epoch {epoch}/{args.epochs} | Train: {train_loss:.6f} | Val: {val_loss:.6f}")
+            print(f"  Val per regime - R0: {val_regime_losses[0]:.6f}, R1: {val_regime_losses[1]:.6f}, R2: {val_regime_losses.get(2, float('nan')):.6f}")
+        else:
+            val_loss = trainer.evaluate(val_tasks)
+            val_losses.append(val_loss)
+            print(f"Epoch {epoch}/{args.epochs} | Train: {train_loss:.6f} | Val: {val_loss:.6f}")
         
         # Save best model
         if val_loss < best_val_loss:
@@ -395,14 +404,14 @@ if __name__ == "__main__":
                         help='Dropout probability')
     
     # MAML hyperparameters
-    parser.add_argument('--inner_lr', type=float, default=0.01,
-                        help='Inner loop learning rate')
-    parser.add_argument('--outer_lr', type=float, default=0.001,
+    parser.add_argument('--inner_lr', type=float, default=0.001,
+                        help='Inner loop learning rate (lowered for crisis stability)')
+    parser.add_argument('--outer_lr', type=float, default=0.0001,
                         help='Outer loop (meta) learning rate')
-    parser.add_argument('--inner_steps', type=int, default=5,
-                        help='Number of inner loop gradient steps')
-    parser.add_argument('--meta_batch_size', type=int, default=8,
-                        help='Number of tasks per meta-batch')
+    parser.add_argument('--inner_steps', type=int, default=10,
+                        help='Number of inner loop gradient steps (increased for better adaptation)')
+    parser.add_argument('--meta_batch_size', type=int, default=4,
+                        help='Number of tasks per meta-batch (smaller for stability)')
     
     # Training
     parser.add_argument('--epochs', type=int, default=50,
