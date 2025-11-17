@@ -8,16 +8,16 @@
     "test_end": "2024-12-31T00:00:00"
   },
   "task_counts": {
-    "train": 74,
+    "train": 89,
     "val": 26,
     "test": 29,
-    "total": 129
+    "total": 144
   },
   "regime_distribution": {
     "train": {
       "regime_0": 15,
       "regime_1": 54,
-      "regime_2": 5
+      "regime_2": 20
     },
     "val": {
       "regime_0": 4,
@@ -105,7 +105,22 @@
       70,
       71,
       72,
-      73
+      73,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      135,
+      136,
+      137,
+      138,
+      139,
+      140,
+      141,
+      142,
+      143
     ],
     "val_task_ids": [
       74,
@@ -183,5 +198,11 @@
     "regime_0_1_filtering": "\u226540 days (30 support + 10 query)",
     "regime_2_filtering": "\u226520 days (10 support + 10 query)",
     "rationale": "VIX>40 events are crisis periods that resolve quickly"
+  },
+  "augmentation_info": {
+    "augmented_count": 15,
+    "target_regime": "regime_2",
+    "methods_used": "jitter,scale,mixup",
+    "augmented_at": "2025-11-11T12:26:07.696865"
   }
 }
