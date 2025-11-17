@@ -1,33 +1,23 @@
 {
-  "version": "2.0_leakage_fixed",
-  "split_strategy": "date_based_chronological",
-  "description": "Tasks split by start date for temporal validity (ZERO LEAKAGE)",
-  "created_at": "2025-11-04T12:05:46.313922",
-  "leakage_check": "PASSED - stride=40 ensures zero query-to-support leakage",
+  "version": "3.0_adaptive_windows",
+  "created_at": "2025-11-06T21:06:20.523273",
+  "description": "Tasks split with adaptive windows for Regime 2 (VIX>40)",
   "split_dates": {
-    "train_start": "1990-03-13T00:00:00",
     "train_end": "2010-12-31T00:00:00",
-    "val_start": "2011-01-01T00:00:00",
     "val_end": "2017-12-31T00:00:00",
-    "test_start": "2018-01-01T00:00:00",
     "test_end": "2024-12-31T00:00:00"
   },
   "task_counts": {
-    "train": 71,
+    "train": 74,
     "val": 26,
-    "test": 28,
-    "total": 125
-  },
-  "task_percentages": {
-    "train": 56.8,
-    "val": 20.8,
-    "test": 22.4
+    "test": 29,
+    "total": 129
   },
   "regime_distribution": {
     "train": {
       "regime_0": 15,
       "regime_1": 54,
-      "regime_2": 2
+      "regime_2": 5
     },
     "val": {
       "regime_0": 4,
@@ -37,7 +27,7 @@
     "test": {
       "regime_0": 6,
       "regime_1": 22,
-      "regime_2": 0
+      "regime_2": 1
     }
   },
   "task_indices": {
@@ -112,12 +102,12 @@
       67,
       68,
       69,
-      70
-    ],
-    "val_task_ids": [
+      70,
       71,
       72,
-      73,
+      73
+    ],
+    "val_task_ids": [
       74,
       75,
       76,
@@ -140,12 +130,12 @@
       93,
       94,
       95,
-      96
-    ],
-    "test_task_ids": [
+      96,
       97,
       98,
-      99,
+      99
+    ],
+    "test_task_ids": [
       100,
       101,
       102,
@@ -170,21 +160,28 @@
       121,
       122,
       123,
-      124
+      124,
+      125,
+      126,
+      127,
+      128
     ]
   },
   "dataset_config": {
-    "support_size": 30,
+    "regime_0_1_support": 30,
+    "regime_2_support": 10,
     "query_size": 10,
-    "stride": 40,
-    "window_size": 40,
+    "regime_0_1_stride": 40,
+    "regime_2_stride": 20,
+    "regime_0_1_window": 40,
+    "regime_2_window": 20,
     "num_features": 32,
     "num_targets": 1
   },
-  "data_quality": {
-    "leakage_pairs_found": 0,
-    "within_segment_pairs_checked": 45,
-    "stride_configuration": "stride = window_size (40 days) for zero leakage",
-    "reduction_from_original": "73 tasks (36.9%) removed to ensure research quality"
+  "adaptive_strategy": {
+    "description": "Regime 2 uses smaller windows (10+10) because VIX spikes are short-lived",
+    "regime_0_1_filtering": "\u226540 days (30 support + 10 query)",
+    "regime_2_filtering": "\u226520 days (10 support + 10 query)",
+    "rationale": "VIX>40 events are crisis periods that resolve quickly"
   }
 }
